@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Taktor">
+<meta name="theme-color" content="#254FE5">
+<title>Taktor</title>
+<style>
+  html, body { height: 100%; margin: 0; background: #254FE5; overflow: hidden; }
+  .escena { position: fixed; inset: 0; display: grid; place-items: center; }
+  .velo { position: absolute; inset: -6%; width: 112%; height: 112%; object-fit: cover; filter: blur(40px); opacity: .55; }
+  .video { position: relative; width: 100%; height: 100%; object-fit: contain; }
+  button { position: fixed; right: 20px; top: 20px; font: 700 18px/1 system-ui, sans-serif; padding: 14px 20px; border-radius: 99px; border: 0; background: #fff; color: #254FE5; box-shadow: 0 6px 20px rgba(0,0,0,.25); transition: opacity 400ms; }
+  button.oculto { opacity: 0; }
+</style>
+</head>
+<body>
+<div class="escena">
+  <video class="velo" id="velo" src="taktor-video.mp4" muted loop playsinline autoplay preload="auto" aria-hidden="true"></video>
+  <video class="video" id="video" src="taktor-video.mp4" muted loop playsinline autoplay preload="auto"></video>
+</div>
+<button id="completa">Pantalla completa</button>
+<script>
+  const v = document.getElementById('video'), velo = document.getElementById('velo'), b = document.getElementById('completa');
+  const jugar = () => { v.play().catch(() => {}); velo.play().catch(() => {}); };
+  v.addEventListener('timeupdate', () => { if (Math.abs(velo.currentTime - v.currentTime) > 0.4) velo.currentTime = v.currentTime; });
+  v.addEventListener('pause', () => setTimeout(jugar, 400));
+  v.addEventListener('ended', () => { v.currentTime = 0; jugar(); });
+  v.addEventListener('webkitendfullscreen', jugar);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) jugar(); });
+  b.addEventListener('click', async e => {
+    e.stopPropagation();
+    try {
+      if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
+      else if (v.webkitEnterFullscreen) v.webkitEnterFullscreen();
+    } catch (err) { if (v.webkitEnterFullscreen) v.webkitEnterFullscreen(); }
+  });
+  let t = 0; const mostrar = () => { b.classList.remove('oculto'); clearTimeout(t); t = setTimeout(() => b.classList.add('oculto'), 6000); };
+  document.addEventListener('pointerdown', mostrar); mostrar();
+  (async () => { try { await navigator.wakeLock?.request('screen'); } catch (e) {} })();
+  jugar();
+</script>
+</body>
+</html>
